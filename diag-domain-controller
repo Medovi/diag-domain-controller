@@ -312,6 +312,23 @@ is_not_empty_sysvol() {
     return $retval
 }
 
+# Checking the availability of the package in the system
+__is_package_installed() {
+    local retval=0
+    local package=$1
+
+    rpm -q "$package" &> /dev/null || retval=1
+
+    if test "$retval" = 0; then
+	echo -e "Basic information about the \"$package\" package:\n"
+        rpm -qi "$package"
+    else
+	echo -e "Error. Perhaps the \"$package\" package is not installed"
+    fi
+
+    return $retval
+}
+
 # Checking for the samba package in the system
 is_samba_package_installed() {
     local retval=0
@@ -321,32 +338,26 @@ is_samba_package_installed() {
     heimdal_name="samba-dc"
     mit_name="samba-dc-mitkrb5"
 
-    rpm -q "$heimdal_name" &> /dev/null || rpm -q "$mit_name" &> /dev/null && retval=0 || retval=1
-
-    if test "$retval" = 0; then
-	if rpm -q "$heimdal_name" &> /dev/null ; then
-	    echo -e "Basic information about the \"$heimdal_name\" package:\n"
-	    rpm -qi "$heimdal_name"
-	else
-	    echo -e "Basic information about the \"$mit_name\" package:\n"
-	    rpm -qi "$mit_name"
-	fi
+    if rpm -q "$heimdal_name" &> /dev/null ; then
+	__is_package_installed "$heimdal_name" || retval=1
+    elif rpm -q "$mit_name" &> /dev/null ; then
+	__is_package_installed "$mit_name" || retval=1
     else
 	echo -e "Error. Perhaps the \"$heimdal_name\" package or \"$mit_name\" package is not installed"
+	retval=1
     fi
 
     return $retval
 }
 
-# Checking whether the Samba service is running
-is_samba_service_running() {
+# Checking the status of the service
+__is_service_running() {
     local retval=0
-    local service=
+    local service=$1
     local out=
     local out_active=
 
-    service="samba.service"
-    out="$(systemctl status samba.service 2>&1 | head -n3)"
+    out="$(systemctl status $service 2>&1 | head -n3)"
     out_active="$(systemctl is-active "$service" 2>&1)"
 
     if test "$out_active" = "active"; then
@@ -364,6 +375,11 @@ is_samba_service_running() {
     fi
 
     return $retval
+}
+
+# Checking whether the Samba service is running
+is_samba_service_running() {
+    __is_service_running "samba.service"
 }
 
 # Does the domain controller resolve DNS queries locally
@@ -646,6 +662,17 @@ is_time_synchronization_enabled() {
     return $retval
 }
 
+is_authentication_correct() {
+    local retval=0
+    local service_nscd=
+    local service_sssd=
+    local service_winbind=
+
+    
+
+    return $retval
+}
+
 task is_domain_info_available
 task is_hostname_correct
 task is_hostname_static_and_transient
@@ -663,6 +690,7 @@ task does_smb_realm_and_krb5_default_realm_it_match
 task are_there_errors_in_samba_databases
 task is_ntp_service_running
 task is_time_synchronization_enabled
+#task is_authentication_correct
 
 if test "$cmd" = "report"; then
     file_smb="/etc/samba/smb.conf"
