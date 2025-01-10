@@ -109,3 +109,9 @@ display_name.en = "Checking if time synchronization is enabled"
 display_name.ru = "Проверка синхронизации времени"
 comment.en = "Checking if time synchronization is enabled"
 comment.ru = "Проверка синхронизации времени"
+
+[tests.is_authentication_correct]
+display_name.en = "Checking the active authentication method"
+display_name.ru = "Проверка активного метода аутентификации"
+comment.en = "Checking the active authentication method"
+comment.ru = "Проверка активного метода аутентификации"
