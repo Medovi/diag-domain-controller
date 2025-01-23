@@ -9,6 +9,9 @@
 # This program is free software: you can redistribute it and/or modify
 #
 # SPDX-License-Identifier: GNU GPL v3.0
+#
+# shellcheck disable=SC1091
+# shellcheck disable=SC2317
 
 set -euo pipefail
 
@@ -62,7 +65,7 @@ create_title() {
     if test "$cmd" = "report"; then
         echo "$text_title" >> "$journal"
     else
-        echo "$text_title" 
+        echo "$text_title"
     fi
 }
 
@@ -71,12 +74,12 @@ task_options=
 
 for word in $task_list; do
     case "$word" in
-        --*|-*)
-            task_options="$task_options $word"
-            ;;
-        *)
-            task_func="$task_func $word"
-            ;;
+    --* | -*)
+        task_options="$task_options $word"
+        ;;
+    *)
+        task_func="$task_func $word"
+        ;;
     esac
 done
 
@@ -98,42 +101,40 @@ eval set -- "$TEMP"
 
 while :; do
     case "$1" in
-        -l|--list)
-            cmd="list"
-            shift
-            ;;
-        -V|--version)
-            print_version
-            shift
-            ;;
-        -v|--verbose)
-            cmd="verbose"
-            create_title
-            shift
-            ;;
-	-r|--report)
-            cmd="report"
-            create_title
-            shift
-            path_to_report_archive="${1#=}"
-            shift
-            ;;
-        -p|--plain)
-	    plain_mode=1
-	    report_archive="$temp_dir/report_$current_date.tar.gz"
-	    shift
-	    ;;
-        -h|--help)
-            show_usage
-            shift
-            ;;
-        --)
-            shift
-            break
-            ;;
-        *)
-            fatal "Unrecognized option: $1"
-            ;;
+    -l | --list)
+        cmd="list"
+        shift
+        ;;
+    -V | --version)
+        print_version
+        ;;
+    -v | --verbose)
+        cmd="verbose"
+        create_title
+        shift
+        ;;
+    -r | --report)
+        cmd="report"
+        create_title
+        shift
+        path_to_report_archive="${1#=}"
+        shift
+        ;;
+    -p | --plain)
+        plain_mode=1
+        report_archive="$temp_dir/report_$current_date.tar.gz"
+        shift
+        ;;
+    -h | --help)
+        show_usage
+        ;;
+    --)
+        shift
+        break
+        ;;
+    *)
+        fatal "Unrecognized option: $1"
+        ;;
     esac
 done
 
@@ -147,13 +148,13 @@ task_run() {
     local func="$1"
 
     if test -n "$task_func" && test "$cmd" != "report"; then
-	echo "$task_func" | tr ' ' '\n' | grep -q "^$func\$" || return 0
+        echo "$task_func" | tr ' ' '\n' | grep -q "^$func\$" || return 0
     fi
 
     $func && retval=0 || retval="$?"
     test $retval = 0 || global_retval=1
 
-    return $retval
+    return "$retval"
 }
 
 # Determining the test execution status
@@ -162,14 +163,18 @@ test_status() {
     local task="$2"
 
     case "$retval" in
-	0) echo "[DONE]: $task"
-	    ;;
-	1) echo "[FAIL]: $task"
-	    ;;
-	2) echo "[WARN]: $task"
-	    ;;
-	*) echo "[FAIL]: $task"
-	    ;;
+    0)
+        echo "[DONE]: $task"
+        ;;
+    1)
+        echo "[FAIL]: $task"
+        ;;
+    2)
+        echo "[WARN]: $task"
+        ;;
+    *)
+        echo "[FAIL]: $task"
+        ;;
     esac
 }
 
@@ -183,35 +188,35 @@ task() {
     local task="$1"
 
     case "$cmd" in
-	list)
-	    task_show "$task"
-	    ;;
-	report)
-	    local retval=0
+    list)
+        task_show "$task"
+        ;;
+    report)
+        local retval=0
 
-	    delimiter_line >> "$journal"
-            task_run "$task" >> "$journal" 2>&1 || retval="$?"
-    	    delimiter_line >> "$journal"
-            test_status "$retval" "$task" >> "$journal"
-            ;;
-	default)
-	    local retval=0
+        delimiter_line >> "$journal"
+        task_run "$task" >> "$journal" 2>&1 || retval="$?"
+        delimiter_line >> "$journal"
+        test_status "$retval" "$task" >> "$journal"
+        ;;
+    default)
+        local retval=0
 
-	    task_run "$task" &> /dev/null || retval="$?"
-	    test_status "$retval" "$task"
-	    ;;
-	verbose)
-	    if test -z "$task_func" || grep -q "$task" <<< "$task_func"; then
-		local retval=0
-		delimiter_line
-		task_run "$task" || retval="$?"
-		delimiter_line
-		test_status "$retval" "$task"
-	    fi
-	    ;;
-	*)
-	    fatal "Unrecognized command: $cmd"
-	    ;;
+        task_run "$task" &>/dev/null || retval="$?"
+        test_status "$retval" "$task"
+        ;;
+    verbose)
+        if test -z "$task_func" || grep -q "$task" <<< "$task_func"; then
+            local retval=0
+            delimiter_line
+            task_run "$task" || retval="$?"
+            delimiter_line
+            test_status "$retval" "$task"
+        fi
+        ;;
+    *)
+        fatal "Unrecognized command: $cmd"
+        ;;
     esac
 }
 
@@ -223,12 +228,12 @@ is_domain_info_available() {
     out="$(/usr/bin/samba-tool domain info 127.0.0.1 2>&1)" || retval=1
 
     if test "$retval" = 0; then
-	echo -e "General information about the domain controller:\n$out"
+        echo -e "General information about the domain controller:\n$out"
     else
-	echo -e "Error:\n$out"
+        echo -e "Error:\n$out"
     fi
 
-    return $retval
+    return "$retval"
 }
 
 # Checking the correct spelling of the domain name of the host
@@ -237,33 +242,31 @@ is_hostname_correct() {
     local validate_regex=
     local retval=0
     local smb_realm=
-    
+
     smb_realm="$(testparm -l -v -s 2>/dev/null | grep "^\s*realm\s*=" | sed -e 's/^\s*realm\s*=\s*//' -e 's/\s*$//')"
     smb_realm="$(echo "$smb_realm" | tr '[:upper:]' '[:lower:]')"
     hostname="$(hostname -s)"
     fqdn_hostname="$(hostname -f)"
     validate_regex="^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$"
 
-    if [ "${#hostname}" -gt 15 ]; then
-	echo "Length must be less than 16 characters."
-	retval=1
+    if test "${#hostname}" -gt 15; then
+        echo "Length must be less than 16 characters."
+        retval=1
     else
-	grep -E "$validate_regex" >/dev/null 2>&1 <<< "$hostname" || retval=1
-	if [ $retval -eq 1 ]; then
-	    echo "Wrong hostname. It may contain prohibited characters."
-	else
-	    grep -E "^[^.]+.$smb_realm$" >/dev/null 2>&1 <<< "$fqdn_hostname"
-	    if [ $? -gt 0 ]; then
-		echo "Controller name is not FQDN or domain_realm does not match. This may cause some problems."
-	    fi
-	fi
+        grep -E "$validate_regex" >/dev/null 2>&1 <<< "$hostname" || retval=1
+        if test "$retval" -eq 1; then
+            echo "Wrong hostname. It may contain prohibited characters."
+        else
+            grep -E "^[^.]+.$smb_realm$" >/dev/null 2>&1 <<< "$fqdn_hostname" &&
+                echo "Controller name is not FQDN or domain_realm does not match. This may cause some problems."
+        fi
     fi
 
-    if [ $retval -eq 0 ]; then
-	echo "The domain name of the domain controller corresponds to the FQDN."
+    if test "$retval" -eq 0; then
+        echo "The domain name of the domain controller corresponds to the FQDN."
     fi
 
-    return $retval
+    return "$retval"
 }
 
 # Checking if the static and temporary hostname match
@@ -286,30 +289,31 @@ is_hostname_static_and_transient() {
         echo "The hostnamectl command could not be executed."
     fi
 
-    return $retval
+    return "$retval"
 }
 
 # Checking if the sysvol directory is empty
 is_not_empty_sysvol() {
     local retval=0
 
-    test -n "$(ls -A /var/lib/samba/sysvol 2> /dev/null)" || retval=2
+    test -n "$(ls -A /var/lib/samba/sysvol 2>/dev/null)" || retval=2
 
     if test "$retval" = 0; then
-	echo -e "The \"sysvol\" directory contains the following files (the first 10 files are presented):"
-	ls -laA /var/lib/samba/sysvol
+        echo -e "The \"sysvol\" directory contains the following files (the first 10 files are presented):"
+        ls -laA /var/lib/samba/sysvol
 
-	for dir in $(ls -d /var/lib/samba/sysvol/*/ | head -n 10); do
-	    dir_name="$(basename $dir)"
+        # shellcheck disable=SC2012
+        for dir in $(ls -d /var/lib/samba/sysvol/*/ | head -n 10); do
+            dir_name="$(basename "$dir")"
 
-	    echo -e "\nListing for directory $dir_name (the first 10 files are presented):"
-	    ls -laA "$dir" | head -n 10
-	done
+            echo -e "\nListing for directory $dir_name (the first 10 files are presented):"
+            ls -laA "$dir" | head -n 10
+        done
     else
-	echo -e "Error. There may be no rights to view the\ndirectory, the directory does not exist,\nor the directory is empty."
+        echo -e "Error. There may be no rights to view the\ndirectory, the directory does not exist,\nor the directory is empty."
     fi
 
-    return $retval
+    return "$retval"
 }
 
 # Checking for the samba package in the system
@@ -321,21 +325,21 @@ is_samba_package_installed() {
     heimdal_name="samba-dc"
     mit_name="samba-dc-mitkrb5"
 
-    rpm -q "$heimdal_name" &> /dev/null || rpm -q "$mit_name" &> /dev/null && retval=0 || retval=1
+    rpm -q "$heimdal_name" &>/dev/null || rpm -q "$mit_name" &>/dev/null && retval=0 || retval=1
 
     if test "$retval" = 0; then
-	if rpm -q "$heimdal_name" &> /dev/null ; then
-	    echo -e "Basic information about the \"$heimdal_name\" package:\n"
-	    rpm -qi "$heimdal_name"
-	else
-	    echo -e "Basic information about the \"$mit_name\" package:\n"
-	    rpm -qi "$mit_name"
-	fi
+        if rpm -q "$heimdal_name" &>/dev/null; then
+            echo -e "Basic information about the \"$heimdal_name\" package:\n"
+            rpm -qi "$heimdal_name"
+        else
+            echo -e "Basic information about the \"$mit_name\" package:\n"
+            rpm -qi "$mit_name"
+        fi
     else
-	echo -e "Error. Perhaps the \"$heimdal_name\" package or \"$mit_name\" package is not installed"
+        echo -e "Error. Perhaps the \"$heimdal_name\" package or \"$mit_name\" package is not installed"
     fi
 
-    return $retval
+    return "$retval"
 }
 
 # Checking whether the Samba service is running
@@ -350,20 +354,20 @@ is_samba_service_running() {
     out_active="$(systemctl is-active "$service" 2>&1)"
 
     if test "$out_active" = "active"; then
-	echo -e "The \"$service\" service is running:\n$out"
-	retval=0
+        echo -e "The \"$service\" service is running:\n$out"
+        retval=0
     elif test "$out_active" = "failed"; then
-	echo -e "The service is not running, an error has occurred:\n$out"
-	retval=1
+        echo -e "The service is not running, an error has occurred:\n$out"
+        retval=1
     elif test "$(systemctl is-enabled "$service")" = "disabled"; then
-	echo -e "Warning. The service is not active:\n$out"
-	retval=2
+        echo -e "Warning. The service is not active:\n$out"
+        retval=2
     else
-	echo -e "Error. Perhaps the service is missing:\n$out"
-	retval=1
+        echo -e "Error. Perhaps the service is missing:\n$out"
+        retval=1
     fi
 
-    return $retval
+    return "$retval"
 }
 
 # Does the domain controller resolve DNS queries locally
@@ -373,26 +377,26 @@ is_resolve_local() {
     found_search=0
     found_correct_nameserver=0
 
-    while IPS= read -r line; do
-	if test "$found_search" = 0 && echo "$line" | grep -q "^search"; then
-	    found_search=1
-	    continue
-	fi
+    while IPS='' read -r line; do
+        if test "$found_search" = 0 && echo "$line" | grep -q "^search"; then
+            found_search=1
+            continue
+        fi
 
-	if test "$found_search" = 1 && echo "$line" | grep -q "^nameserver 127\.0\.0\.1"; then
-	    found_correct_nameserver=1
-	    break
-	fi
-    done < "$resolv_conf"
+        if test "$found_search" = 1 && echo "$line" | grep -q "^nameserver 127\.0\.0\.1"; then
+            found_correct_nameserver=1
+            break
+        fi
+    done <"$resolv_conf"
 
     if test "$found_correct_nameserver" = 1; then
-	echo "In the resolv.conf file, the first line is nameserver 127.0.0.1 - everything is correct."
+        echo "In the resolv.conf file, the first line is nameserver 127.0.0.1 - everything is correct."
     else
-	echo "In the resolv.conf file, the first line is a line other than nameserver 127.0.0.1 - is not correct"
-	retval=1
+        echo "In the resolv.conf file, the first line is a line other than nameserver 127.0.0.1 - is not correct"
+        retval=1
     fi
-    
-    return $retval
+
+    return "$retval"
 }
 
 # Checking for the presence of the krb5.conf configuration file and displaying the contents of the file
@@ -410,7 +414,7 @@ is_krb5_conf_file_exists() {
         echo "The krb5.conf configuration file was not found."
     fi
 
-    return $retval
+    return "$retval"
 }
 
 # Checking for the presence of the smb.conf configuration file and displaying the contents of the file
@@ -428,7 +432,7 @@ is_smb_conf_file_exists() {
         echo "The smb.conf configuration file was not found."
     fi
 
-    return $retval
+    return "$retval"
 }
 
 # Checking the specified method of caching Kerberos tickets
@@ -449,7 +453,7 @@ is_there_way_to_cache_kerberos_tickets() {
         echo "The caching method is not specified."
     fi
 
-    return $retval
+    return "$retval"
 }
 
 # Checking: is the search for the kerberos domain name enabled via DNS
@@ -468,7 +472,7 @@ is_dns_lookup_kdc_enabled() {
         fi
     fi
 
-    return $retval
+    return "$retval"
 }
 
 # Checking for the presence of the resolv.conf configuration file and displaying the contents of the file
@@ -486,7 +490,7 @@ is_resolv_conf_file_exists() {
         echo "The resolv.conf configuration file was not found."
     fi
 
-    return $retval
+    return "$retval"
 }
 
 # Checking whether the realm record in the krb5.conf configuration file matches one of the domain names in the resolv.conf configuration file
@@ -533,7 +537,7 @@ does_resolv_conf_and_default_realm_it_match() {
         echo "The realm entry from the \"krb5.conf\" file does not match any of the domain name entries in the \"resolv.conf\" file."
     fi
 
-    return $retval
+    return "$retval"
 }
 
 # Checking the correspondence of the domain entry in the krb5.conf configuration file to the realm entry in the smb.conf configuration file
@@ -549,7 +553,7 @@ does_smb_realm_and_krb5_default_realm_it_match() {
         smb_realm="$(testparm -l -v -s 2>/dev/null | grep "^\s*realm\s*=" | sed -e 's/^\s*realm\s*=\s*//' -e 's/\s*$//')"
         smb_realm="$(echo "$smb_realm" | tr '[:upper:]' '[:lower:]')"
 
-	echo "The compliance of the realm record in smb.conf is checked using the testparm utility."
+        echo "The compliance of the realm record in smb.conf is checked using the testparm utility."
 
         if test -z "$smb_realm"; then
             echo -e "The realm record was not found in the \"smb.conf\" configuration file.\n"
@@ -584,7 +588,7 @@ does_smb_realm_and_krb5_default_realm_it_match() {
         echo "the realm entry from the \"krb5.conf\" configuration file does not match the realm entry from the \"smb.conf\" configuration file."
     fi
 
-    return $retval
+    return "$retval"
 }
 
 # Samba databases are checked for errors
@@ -595,55 +599,55 @@ are_there_errors_in_samba_databases() {
     out="$(/usr/bin/samba-tool dbcheck 2>&1)"
 
     if test $? = 0; then
-	echo -e "No errors were found in the Samba databases:\n$out"
+        echo -e "No errors were found in the Samba databases:\n$out"
     else
-	echo -e "Warning. There are no superuser rights or errors were found.\n$out"
-	retval=2
+        echo -e "Warning. There are no superuser rights or errors were found.\n$out"
+        retval=2
     fi
 
-    return $retval
+    return "$retval"
 }
 
 # Checking the activity of the ntp service
 is_ntp_service_running() {
     local retval=0
 
-    timedatectl &> /dev/null || retval=1
+    timedatectl &>/dev/null || retval=1
 
     if test "$retval" = 1; then
-	echo "An error occurred while executing the timedatectl command. Perhaps there is no such command."
+        echo "An error occurred while executing the timedatectl command. Perhaps there is no such command."
     elif test "$(timedatectl show -p NTP --value)" = "yes"; then
-	echo -e "The NTP service is active:\n"
-	timedatectl
-	retval=0
+        echo -e "The NTP service is active:\n"
+        timedatectl
+        retval=0
     else
-	echo -e "The NTP service is inactive:\n"
-	timedatactl
-	retval=2
+        echo -e "The NTP service is inactive:\n"
+        timedatactl
+        retval=2
     fi
 
-    return $retval
+    return "$retval"
 }
 
 # Checking if time synchronization is enabled
 is_time_synchronization_enabled() {
     local retval=0
 
-    timedatectl &> /dev/null || retval=1
+    timedatectl &>/dev/null || retval=1
 
     if test "$retval" = 1; then
         echo "An error occurred while executing the timedatectl command. Perhaps there is no such command."
     elif test "$(timedatectl show -p NTPSynchronized --value)" = "yes"; then
-	echo -e "Syncing is enabled:\n"
-	timedatectl
-	retval=0
+        echo -e "Syncing is enabled:\n"
+        timedatectl
+        retval=0
     else
-	echo -e "Warning. Time synchronization is disabled:\n"
-	timedatectl
-	retval=2
+        echo -e "Warning. Time synchronization is disabled:\n"
+        timedatectl
+        retval=2
     fi
 
-    return $retval
+    return "$retval"
 }
 
 task is_domain_info_available
@@ -669,7 +673,8 @@ if test "$cmd" = "report"; then
     file_krb="/etc/krb5.conf"
 
     if test "$plain_mode" = 0; then
-	report_archive="$TMP/report_$current_date.tar.gz"
+        # shellcheck disable=SC2153
+        report_archive="$TMP/report_$current_date.tar.gz"
     fi
 
     tar -czf "${report_archive}" \
