@@ -10,7 +10,7 @@ stdout_byte_limit = 200000
 action_id = "Info"
 
 [methods.Run]
-execute = "diag-domain-controller {param} -v"
+execute = "diag-domain-controller {param} -a"
 stdout_signal_name = "diag1_stdout_signal"
 stderr_signal_name = "diag1_stderr_signal"
 thread_limit = 3

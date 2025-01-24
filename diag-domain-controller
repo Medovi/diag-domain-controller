@@ -29,6 +29,7 @@ create_temporary temp_dir -d
 journal="$temp_dir/report_$current_date.txt"
 path_to_report_archive=
 plain_mode=0
+alterator=0
 
 print_version() {
     cat <<EOF
@@ -48,6 +49,7 @@ Options:
     -V, --version		print program version and exit
     -v, --verbose               verbose output to terminal
     -r, --report=[file]         output to report file (optional file path)
+    -a, --alterator             output for use in alterator apps
     -h, --help                  show this text and exit
 EOF
     exit 0
@@ -93,8 +95,8 @@ task_func="$(echo "$task_func" | sed 's/[[:space:]]*//;s/[[:space:]]*$//')"
 task_options="$(echo "$task_options" | tr ' ' '\n' | sort -u | tr '\n' ' ')"
 task_options="$(echo "$task_options" | sed 's/[[:space:]]*//;s/[[:space:]]*$//')"
 
-short_options="l,V,v,r::,h,p"
-long_options="list,version,verbose,report::,help,plain"
+short_options="l,V,v,r::,h,p,a"
+long_options="list,version,verbose,report::,help,plain,alterator"
 
 TEMP=$(getopt -n "$PROG_NAME" -o "$short_options", -l "$long_options" -- "$@") || show_usage
 eval set -- "$TEMP"
@@ -123,6 +125,11 @@ while :; do
     -p | --plain)
         plain_mode=1
         report_archive="$temp_dir/report_$current_date.tar.gz"
+        shift
+        ;;
+    -a | --alterator)
+        alterator=1
+        cmd="alterator"
         shift
         ;;
     -h | --help)
@@ -212,6 +219,12 @@ task() {
             task_run "$task" || retval="$?"
             delimiter_line
             test_status "$retval" "$task"
+        fi
+        ;;
+    alterator)
+        if test -z "$task_func" || grep -q "$task" <<< "$task_func"; then
+            local retval=0
+            task_run "$task" || retval="$?"
         fi
         ;;
     *)
