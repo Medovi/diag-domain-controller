@@ -635,7 +635,7 @@ is_ntp_service_running() {
         retval=0
     else
         echo -e "The NTP service is inactive:\n"
-        timedatactl
+        timedatectl
         retval=2
     fi
 
