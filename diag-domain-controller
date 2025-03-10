@@ -586,17 +586,11 @@ is_resolv_conf_file_exists() {
 # Checking whether the realm record in the krb5.conf configuration file matches one of the domain names in the resolv.conf configuration file
 does_resolv_conf_and_default_realm_it_match() {
     local retval=2
-    local search_line=
     local search_domains=
-    local krb5_default_realm_line=
     local krb5_default_realm=
-    local domains=
-    local realm=
 
     if test -e /etc/resolv.conf; then
-        search_line="$(grep "^search\s\+" /etc/resolv.conf || true)"
-        search_domains="$(echo "$search_line" | sed -e 's/^search\s\+//' -e 's/\s\+$//')"
-        domains=$(echo "$search_domains=" | tr '[:upper:]' '[:lower:]')
+        search_domains="$(__get_resolv_search_domains)"
 
         echo "The following domain names are defined from the \"resolv.conf\" configuration file:"
         echo -e "$search_domains\n"
@@ -606,9 +600,7 @@ does_resolv_conf_and_default_realm_it_match() {
     fi
 
     if test -e /etc/krb5.conf; then
-        krb5_default_realm_line="$(grep "^\s*default_realm\s\+" /etc/krb5.conf || true)"
-        krb5_default_realm="$(echo "$krb5_default_realm_line" | sed -e 's/^\s*default_realm\s*=\s*//' -e 's/\s*$//')"
-        realm=$(echo "$krb5_default_realm=" | tr '[:upper:]' '[:lower:]')
+        krb5_default_realm="$(__get_krb5_default_realm)"
 
         echo "The following realm entry has been defined from the \"krb5.conf\" configuration file:"
         echo -e "$krb5_default_realm\n"
@@ -617,9 +609,11 @@ does_resolv_conf_and_default_realm_it_match() {
         retval=1
     fi
 
-    for domain in $domains; do
-        test "$domain" = "$realm" && retval=0
-    done
+    if test "$retval" != 1; then
+        for domain in $search_domains; do
+            test "$domain" = "$krb5_default_realm" && retval=0
+        done
+    fi
 
     if test "$retval" = 0; then
         echo "The realm entry from the \"krb5.conf\" file matches the domain name defined in the \"resolv.conf\" file."
