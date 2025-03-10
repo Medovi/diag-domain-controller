@@ -628,14 +628,10 @@ does_resolv_conf_and_default_realm_it_match() {
 does_smb_realm_and_krb5_default_realm_it_match() {
     local retval=0
     local smb_realm=
-    local krb5_default_realm_line=
     local krb5_default_realm=
-    local domains=
-    local realm=
 
     if which testparm >/dev/null 2>&1; then
-        smb_realm="$(testparm -l -v -s 2>/dev/null | grep "^\s*realm\s*=" | sed -e 's/^\s*realm\s*=\s*//' -e 's/\s*$//')"
-        smb_realm="$(echo "$smb_realm" | tr '[:upper:]' '[:lower:]')"
+        smb_realm="$(__get_smb_realm)"
 
         echo "The compliance of the realm record in smb.conf is checked using the testparm utility."
 
@@ -653,9 +649,7 @@ does_smb_realm_and_krb5_default_realm_it_match() {
     fi
 
     if test -e /etc/krb5.conf; then
-        krb5_default_realm_line="$(grep "^\s*default_realm\s\+" /etc/krb5.conf || true)"
-        krb5_default_realm="$(echo "$krb5_default_realm_line" | sed -e 's/^\s*default_realm\s*=\s*//' -e 's/\s*$//')"
-        krb5_default_realm="$(echo "$krb5_default_realm" | tr '[:upper:]' '[:lower:]')"
+        krb5_default_realm="$(__get_krb5_default_realm)"
 
         echo "The following realm entry has been defined from the \"krb5.conf\" configuration file:"
         echo -e "$krb5_default_realm\n"
@@ -664,7 +658,9 @@ does_smb_realm_and_krb5_default_realm_it_match() {
         retval=1
     fi
 
-    test "$smb_realm" = "$krb5_default_realm" || retval=2
+    if test "$retval" != 1; then
+        test "$smb_realm" = "$krb5_default_realm" || retval=2
+    fi
 
     if test "$retval" = 0; then
         echo "The realm entry from the \"krb5.conf\" configuration file is the same as the realm entry from the \"smb.conf\" configuration file."
