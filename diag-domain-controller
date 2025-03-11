@@ -233,6 +233,50 @@ task() {
     esac
 }
 
+# Checking if the package is installed in the system
+__package_installed() {
+    local retval=1
+    local package_info=
+    local check_all=false
+    local found=false
+
+# The --check-all key is set as the first argument when calling this function.
+# The --check-all key in the "true" value allows you to check all packets in
+# the system that are passed as other arguments when calling the function.
+# The value "false" allows you to check whether one of several packages
+# is installed in the system.
+
+    if test "$1" = "--check-all"; then
+        check_all=true
+        shift
+    fi
+
+    for package in "$@"; do
+        package_info="$(rpm -qi "$package" 2>/dev/null)"
+        if test -n "$package_info"; then
+            echo -e "Basic information about the \"$package\" package:\n$package_info\n\n"
+            test "$retval" != 2 && retval=0
+            found=true
+
+            if ! $check_all; then
+                break
+            fi
+        else
+            if $check_all; then
+                echo -e "The \"$package\" is not installed.\n"
+            fi
+
+            retval=2
+        fi
+    done
+
+    if ! $found; then
+        retval=1
+    fi
+
+    return "$retval"
+}
+
 # Checking the availability of writing general domain information
 is_domain_info_available() {
     local retval=0
