@@ -32,6 +32,12 @@ display_name.ru = "Проверка: содержит ли файлы катал
 comment.en = "Checking if the sysvol directory is empty"
 comment.ru = "Проверка: содержит ли файлы каталог sysvol"
 
+[tests.does_sysvol_contain_necessary_files]
+display_name.en = "Checking the location in sysvol of the folder with the domain name and Policies and scripts inside"
+display_name.ru = "Проверка нахождения в sysvol папки с именем домена и Policies и scripts внутри"
+comment.en = "Checking the location in sysvol of the folder with the domain name and Policies and scripts inside"
+comment.ru = "Проверка нахождения в sysvol папки с именем домена и Policies и scripts внутри"
+
 [tests.is_samba_package_installed]
 display_name.en = "Checking for the samba package in the system"
 display_name.ru = "Проверка наличия установленного в системе пакета samba"
