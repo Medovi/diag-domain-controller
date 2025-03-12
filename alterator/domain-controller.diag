@@ -109,3 +109,9 @@ display_name.en = "Checking if time synchronization is enabled"
 display_name.ru = "Проверка синхронизации времени"
 comment.en = "Checking if time synchronization is enabled"
 comment.ru = "Проверка синхронизации времени"
+
+[tests.is_ports_listening]
+display_name.en = "Checking services that listen on certain ports"
+display_name.ru = "Проверка портов, прослушиваемых необходимыми службами"
+comment.en = "Checking services that listen on certain ports"
+comment.ru = "Проверка портов, прослушиваемых необходимыми службами"
