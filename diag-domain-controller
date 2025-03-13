@@ -233,6 +233,44 @@ task() {
     esac
 }
 
+# Getting a lowercase string
+__get_upper_string() {
+    echo "$(tr '[:upper:]' '[:lower:]')"
+}
+
+# Getting a realm record from smb.conf
+__get_smb_realm() {
+    local smb_realm=
+
+    smb_realm="$(testparm -l -v -s 2>/dev/null | grep "^\s*realm\s*=" | sed -e 's/^\s*realm\s*=\s*//' -e 's/\s*$//')"
+    smb_realm="$(echo "$smb_realm" | __get_upper_string)"
+
+    echo $smb_realm
+}
+
+# Getting a realm record from krb5.conf
+__get_krb5_default_realm() {
+    local krb5_default_realm_line=
+    local krb5_default_realm=
+
+    krb5_default_realm_line="$(grep "^\s*default_realm\s\+" /etc/krb5.conf || true)"
+    krb5_default_realm="$(echo "$krb5_default_realm_line" | sed -e 's/^\s*default_realm\s*=\s*//' -e 's/\s*$//')"
+    krb5_default_realm="$(echo "$krb5_default_realm" | __get_upper_string)"
+
+    echo $krb5_default_realm
+}
+
+# Getting a domain name from resolv.conf
+__get_resolv_search_domains() {
+    local search_line=
+    local search_domains=
+
+    search_line="$(grep "^search\s\+" /etc/resolv.conf || true)"
+    search_domains="$(echo "$search_line" | sed -e 's/^search\s\+//' -e 's/\s\+$//')"
+
+    echo $search_domains
+}
+
 # Checking if the package is installed in the system
 __package_installed() {
     local retval=1
