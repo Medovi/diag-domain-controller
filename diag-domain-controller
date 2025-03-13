@@ -412,6 +412,50 @@ is_not_empty_sysvol() {
     return "$retval"
 }
 
+# Checking the location in sysvol of the folder with the domain name and "Policies" and "scripts" inside
+does_sysvol_contain_necessary_files() {
+    local retval=0
+    local path_to_sysvol=
+    local smb_realm=
+    local files_list_in_sysvol=
+    local files_list_in_domain_name=
+    local required_files=
+
+    path_to_sysvol="/var/lib/samba/sysvol"
+    required_files="$(echo -e "Policies\nscripts")"
+
+    if test -e /etc/samba/smb.conf; then
+        smb_realm="$(__get_smb_realm)"
+
+        if test -z "$smb_realm"; then
+            echo -e "The realm record was not found in the \"smb.conf\" configuration file.\n"
+            retval=1
+        fi
+    else
+	    echo "The smb.conf file does not exist, no further verification is possible."
+        retval=1
+    fi
+
+    if test "$retval" = 0; then
+        files_list_in_sysvol="$(ls -A "$path_to_sysvol/$smb_realm")"
+
+        for folder in $required_files; do
+            if echo "$files_list_in_sysvol" | grep -q "^$folder$"; then
+                if test -z "$(ls -A "$path_to_sysvol/$smb_realm/$folder")"; then
+                    echo -e "The \"$folder\" folder is empty."
+                    retval=2
+                else
+                    echo -e "The \"$folder\" folder is not empty."
+                fi
+            else
+                echo -e "The \"$folder\" folder is not found."
+            fi
+        done
+    fi
+
+    return $retval
+}
+
 # Checking for the samba package in the system
 is_samba_package_installed() {
     local retval=0
@@ -843,6 +887,7 @@ task is_domain_info_available
 task is_hostname_correct
 task is_hostname_static_and_transient
 task is_not_empty_sysvol
+task does_sysvol_contain_necessary_files
 task is_samba_package_installed
 task is_samba_service_running
 task is_resolve_local
