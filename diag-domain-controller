@@ -19,7 +19,7 @@ set -euo pipefail
 . shell-temp
 
 PROG_NAME="${0##*/}"
-VERSION="0.0.2"
+VERSION="0.2.1"
 global_retval=0
 task_list="$*"
 cmd="default"
@@ -55,13 +55,13 @@ EOF
     exit 0
 }
 
-text_title="        Domain Controller Diagnostic Tool
--------------------------------------------------
-Version: $VERSION
-Date: $current_date
--------------------------------------------------
-System information:
-Kernel: $(uname -r)"
+text_title="+-----------------------------------------------------------------+
+|                Domain Controller Diagnostic Tool                |
++--------------------------------+--------------------------------+
+| Program version                | $VERSION                          |
++--------------------------------+--------------------------------+
+| Kernel                         | $(uname -r)            |
++-----------------------------------------------------------------+"
 
 create_title() {
     if test "$cmd" = "report"; then
@@ -167,32 +167,42 @@ task_run() {
 # Determining the test execution status
 test_status() {
     local retval="$1"
-    local task="$2"
+    local GREEN=
+    local RED=
+    local YELLOW=
+    local RESET=
+
+    if ! test "$cmd" = "report"; then
+        GREEN="\033[32m"
+        RED="\033[31m"
+        YELLOW="\033[33m"
+        RESET="\033[0m"
+    fi
 
     case "$retval" in
     0)
-        echo "[DONE]: $task"
+        printf "Status: %b[DONE]%b\n" "$GREEN" "$RESET"
         ;;
     1)
-        echo "[FAIL]: $task"
+        printf "Status: %b[FAIL]%b\n" "$RED" "$RESET"
         ;;
     2)
-        echo "[WARN]: $task"
+        printf "Status: %b[WARN]%b\n" "$YELLOW" "$RESET"
         ;;
     *)
-        echo "[FAIL]: $task"
+        printf "Status: %b[FAIL]%b\n" "$RED" "$RESET"
         ;;
     esac
 }
 
 delimiter_line() {
-    echo
-    echo "================================================="
+    echo "==================================================================="
 }
 
 # Depending on the parameter of the cmd variable, the function decides what to run
 task() {
     local task="$1"
+    local description="$2"
 
     case "$cmd" in
     list)
@@ -201,24 +211,26 @@ task() {
     report)
         local retval=0
 
+        echo -e "\n\nName: $task\n$description"
         delimiter_line >> "$journal"
         task_run "$task" >> "$journal" 2>&1 || retval="$?"
         delimiter_line >> "$journal"
-        test_status "$retval" "$task" >> "$journal"
+        test_status "$retval" >> "$journal"
         ;;
     default)
         local retval=0
 
         task_run "$task" &>/dev/null || retval="$?"
-        test_status "$retval" "$task"
+        echo "$(test_status "$retval"): $task" | sed 's/Status: //'
         ;;
     verbose)
         if test -z "$task_func" || grep -q "$task" <<< "$task_func"; then
             local retval=0
+            echo -e "\n\nName: $task\n$description"
             delimiter_line
             task_run "$task" || retval="$?"
             delimiter_line
-            test_status "$retval" "$task"
+            test_status "$retval"
         fi
         ;;
     alterator)
@@ -423,6 +435,7 @@ is_krb5_conf_file_exists() {
         ls -l /etc/krb5.conf
         echo
         cat /etc/krb5.conf
+        echo
     else
         echo "The krb5.conf configuration file was not found."
     fi
@@ -663,23 +676,23 @@ is_time_synchronization_enabled() {
     return "$retval"
 }
 
-task is_domain_info_available
-task is_hostname_correct
-task is_hostname_static_and_transient
-task is_not_empty_sysvol
-task is_samba_package_installed
-task is_samba_service_running
-task is_resolve_local
-task is_krb5_conf_file_exists
-task is_smb_conf_file_exists
-task is_there_way_to_cache_kerberos_tickets
-task is_dns_lookup_kdc_enabled
-task is_resolv_conf_file_exists
-task does_resolv_conf_and_default_realm_it_match
-task does_smb_realm_and_krb5_default_realm_it_match
-task are_there_errors_in_samba_databases
-task is_ntp_service_running
-task is_time_synchronization_enabled
+task is_domain_info_available "Checking the availability of viewing general domain information"
+task is_hostname_correct "Checking the correct spelling of the domain name of the host"
+task is_hostname_static_and_transient "Checking if the static and temporary hostname match"
+task is_not_empty_sysvol "Checking if the sysvol directory is empty"
+task is_samba_package_installed "Checking for the samba package in the system"
+task is_samba_service_running "Checking whether the Samba service is running"
+task is_resolve_local "Checking for the string nameserver 127.0.0.1 in file resolv.conf"
+task is_krb5_conf_file_exists "Checking for the presence of the krb5.conf configuration file\nand ndisplaying the contents of the file"
+task is_smb_conf_file_exists "Checking for the presence of the smb.conf configuration file\nand displaying the contents of the file"
+task is_there_way_to_cache_kerberos_tickets "Checking the specified method of caching Kerberos tickets"
+task is_dns_lookup_kdc_enabled "Checking: is the search for the kerberos\ndomain name enabled via DNS"
+task is_resolv_conf_file_exists "Checking for the presence of the resolv.conf configuration file\nand displaying the contents of the file"
+task does_resolv_conf_and_default_realm_it_match "Checking whether the realm record in the krb5.conf\nconfiguration file matches one of the domain names\nin the resolv.conf configuration file"
+task does_smb_realm_and_krb5_default_realm_it_match "Checking the correspondence of the domain entry\nin the krb5.conf configuration file to the realm entry\nin the smb.conf configuration file"
+task are_there_errors_in_samba_databases "Samba databases are checked for errors"
+task is_ntp_service_running "Checking the activity of the ntp service"
+task is_time_synchronization_enabled "Checking if time synchronization is enabled"
 
 if test "$cmd" = "report"; then
     file_smb="/etc/samba/smb.conf"
