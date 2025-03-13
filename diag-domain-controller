@@ -338,8 +338,7 @@ is_hostname_correct() {
     local retval=0
     local smb_realm=
 
-    smb_realm="$(testparm -l -v -s 2>/dev/null | grep "^\s*realm\s*=" | sed -e 's/^\s*realm\s*=\s*//' -e 's/\s*$//')"
-    smb_realm="$(echo "$smb_realm" | tr '[:upper:]' '[:lower:]')"
+    smb_realm="$(__get_smb_realm)"
     hostname="$(hostname -s)"
     fqdn_hostname="$(hostname -f)"
     validate_regex="^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$"
@@ -352,8 +351,10 @@ is_hostname_correct() {
         if test "$retval" -eq 1; then
             echo "Wrong hostname. It may contain prohibited characters."
         else
-            grep -E "^[^.]+.$smb_realm$" >/dev/null 2>&1 <<< "$fqdn_hostname" &&
+            grep -E "^[^.]+.$smb_realm$" >/dev/null 2>&1 <<< "$fqdn_hostname" || retval=2
+            if test "$retval" -eq 2; then
                 echo "Controller name is not FQDN or domain_realm does not match. This may cause some problems."
+            fi
         fi
     fi
 
