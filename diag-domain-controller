@@ -320,12 +320,16 @@ is_domain_info_available() {
     local retval=0
     local out=
 
-    out="$(/usr/bin/samba-tool domain info 127.0.0.1 2>&1)" || retval=1
-
-    if test "$retval" = 0; then
-        echo -e "General information about the domain controller:\n$out"
+    if which samba-tool &>/dev/null; then
+        out="$(/usr/bin/samba-tool domain info 127.0.0.1 2>&1)" || retval=1
+        if test "$retval" = 0; then
+            echo -e "General information about the domain controller:\n$out"
+        else
+            echo -e "There are no superuser rights or errors were found.\n$out"
+        fi
     else
-        echo -e "Error:\n$out"
+        echo "Information could not be obtained, perhaps the samba package is missing from the system."
+        retval=1
     fi
 
     return "$retval"
@@ -720,13 +724,16 @@ are_there_errors_in_samba_databases() {
     local retval=0
     local out=
 
-    out="$(/usr/bin/samba-tool dbcheck 2>&1)"
-
-    if test $? = 0; then
-        echo -e "No errors were found in the Samba databases:\n$out"
+    if which samba-tool &>/dev/null; then
+        out="$(/usr/bin/samba-tool dbcheck 2>&1)" || retval=2
+        if test "$retval" = 0; then
+            echo -e "No errors were found in the Samba databases:\n$out"
+        else
+            echo -e "Warning. There are no superuser rights or errors were found.\n$out"
+        fi
     else
-        echo -e "Warning. There are no superuser rights or errors were found.\n$out"
-        retval=2
+        echo "Information could not be obtained, perhaps the samba package is missing from the system."
+        retval=1
     fi
 
     return "$retval"
