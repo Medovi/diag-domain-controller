@@ -701,6 +701,115 @@ is_time_synchronization_enabled() {
     return "$retval"
 }
 
+# Defining rules for checking certain ports
+__check_port_rules() {
+    local retval=0
+    local port="$1"
+    local service_name="$2"
+
+    case "$port" in
+        53)
+            if test "$service_name" != "bind.service" && test "$service_name" != "samba.service"; then
+                echo "Error: An invalid service is listening on port $port: $service_name"
+                retval=1
+            fi
+            ;;
+        123)
+            if test "$service_name" != "chronyd.service"; then
+                echo "Warning: Port $port listens to a service other than chronyd: $service_name"
+                retval=2
+            fi
+            ;;
+        *)
+            if test "$service_name" != "samba.service"; then
+                echo "Error: An invalid service is listening on port $port: $service_name"
+                retval=1
+            fi
+            ;;
+    esac
+
+    return "$retval"
+}
+
+# Checking that the port is being listened to
+__check_port() {
+    local retval=0
+    local port="$1"
+    local output="$2"
+    local unique_entries=
+    local rule_result=0
+
+    if echo "$output" | grep -q ":$port "; then
+        echo "Port: $port is in use:"
+
+        while IFS= read -r line; do
+            process_name="$(echo "$line" | awk -F'"' '{print $2}' | sed -E 's/\(.*//; s/\[.*//')"
+            pid="$(echo "$line" | awk -F'pid=' '{print $2}' | awk -F',' '{print $1}')"
+            service_name="$(systemctl status "$pid" 2>/dev/null | head -n1 | awk '{print $2}')"
+            entry="$process_name (pid: $pid) - $service_name"
+
+            if ! echo "$unique_entries" | grep -qw "$pid"; then
+                unique_entries="$unique_entries $pid"
+                echo "$entry"
+
+                __check_port_rules "$port" "$service_name"
+                rule_result="$?"
+                if test "$rule_result" = 1; then
+                    retval=1
+                elif test "$rule_result" = 2 && test "$retval" != 1; then
+                    retval=2
+                fi
+            fi
+        done <<< "$(echo "$output" | grep ":$port ")"
+
+    else
+        echo "Port $port is not in use."
+        retval=1
+    fi
+
+    return "$retval"
+}
+
+# Checking that certain services are listening on ports
+is_ports_listening() {
+    local retval=0
+    local ports=
+    local count=
+    local current=1
+    local output=
+
+    ports="53 88 123 135 137 138 139 389 445 464 636 3268 3269"
+    count="$(echo "$ports" | wc -w)"
+    output="$(ss -tulpn)"
+
+    for port in $ports; do
+        if ! __check_port "$port" "$output"; then
+            case "$port" in
+                123)
+                    echo "Warning: Port $port is not listening."
+                    if test "$retval" != 1; then
+                        retval=2
+                    fi
+                    ;;
+                *)
+                    if ! echo "$output" | grep -q ":$port "; then
+                        echo "Error: Port $port is not listening."
+                    fi
+                        retval=1
+                    ;;
+            esac
+        fi
+
+        if test "$current" != "$count"; then
+            echo "-------------------------------------------------"
+        fi
+
+        current="$((current + 1))"
+    done
+
+    return $retval
+}
+
 task is_domain_info_available
 task is_hostname_correct
 task is_hostname_static_and_transient
@@ -718,6 +827,7 @@ task does_smb_realm_and_krb5_default_realm_it_match
 task are_there_errors_in_samba_databases
 task is_ntp_service_running
 task is_time_synchronization_enabled
+task is_ports_listening
 
 if test "$cmd" = "report"; then
     file_smb="/etc/samba/smb.conf"
