@@ -480,15 +480,14 @@ is_samba_package_installed() {
     return "$retval"
 }
 
-# Checking whether the Samba service is running
-is_samba_service_running() {
+# Checking that the service is running
+__service_running() {
     local retval=0
-    local service=
+    local service="$1"
     local out=
     local out_active=
 
-    service="samba.service"
-    out="$(systemctl status samba.service 2>&1 | head -n3)"
+    out="$(systemctl status $service 2>&1 | head -n3)"
     out_active="$(systemctl is-active "$service" 2>&1)"
 
     if test "$out_active" = "active"; then
