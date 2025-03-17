@@ -507,6 +507,19 @@ __service_running() {
     return "$retval"
 }
 
+# Checking whether the Samba service is running
+is_samba_service_running() {
+    local retval=0
+    local service=
+
+    service="samba.service"
+
+    __service_running "$service"
+    retval="$?"
+
+    return "$retval"
+}
+
 # Does the domain controller resolve DNS queries locally
 is_resolve_local() {
     local retval=0
