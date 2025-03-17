@@ -754,18 +754,16 @@ are_there_errors_in_samba_databases() {
 # Checking the activity of the ntp service
 is_ntp_service_running() {
     local retval=0
+    local time_info=
 
-    timedatectl &>/dev/null || retval=1
+    time_info="$(timedatectl 2>/dev/null)" || retval=1
 
     if test "$retval" = 1; then
         echo "An error occurred while executing the timedatectl command. Perhaps there is no such command."
     elif test "$(timedatectl show -p NTP --value)" = "yes"; then
-        echo -e "The NTP service is active:\n"
-        timedatectl
-        retval=0
+        echo -e "The NTP service is active:\n$time_info"
     else
-        echo -e "The NTP service is inactive:\n"
-        timedatectl
+        echo -e "Warning. The NTP service is inactive:\n$time_info"
         retval=2
     fi
 
@@ -775,18 +773,16 @@ is_ntp_service_running() {
 # Checking if time synchronization is enabled
 is_time_synchronization_enabled() {
     local retval=0
+    local time_info=
 
-    timedatectl &>/dev/null || retval=1
+    time_info="$(timedatectl 2>/dev/null)" || retval=1
 
     if test "$retval" = 1; then
         echo "An error occurred while executing the timedatectl command. Perhaps there is no such command."
     elif test "$(timedatectl show -p NTPSynchronized --value)" = "yes"; then
-        echo -e "Syncing is enabled:\n"
-        timedatectl
-        retval=0
+        echo -e "Syncing is enabled:\n$time_info"
     else
-        echo -e "Warning. Time synchronization is disabled:\n"
-        timedatectl
+        echo -e "Warning. Time synchronization is disabled:\n$time_info"
         retval=2
     fi
 
