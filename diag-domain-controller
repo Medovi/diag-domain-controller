@@ -630,6 +630,45 @@ is_there_way_to_cache_kerberos_tickets() {
     return "$retval"
 }
 
+# Checking that the [realms] and [domain_realm] sections are not empty in krb5.conf
+is_sections_with_domain_name_in_krb5_empty() {
+    local retval=0
+    local section_name=
+    local krb5_conf=
+    local in_section=0
+    local check_out=0
+
+    krb5_conf="/etc/krb5.conf"
+
+    while IFS= read -r line; do
+        if echo "$line" | grep -qE '^\[(realms|domain_realm)\]'; then
+            section_name="$(echo $line | sed 's/^\[\(.*\)\]/\1/')"
+            in_section=1
+            check_out=0
+            continue
+        fi
+
+        if test "$in_section" = 1; then
+            if echo "$line" | grep -qE '^\['; then
+                in_section=0
+                continue
+            fi
+
+            if ! echo "$line" | grep -qE '^[[:space:]]*($|#)' && test "$check_out" != 1; then
+                echo "Warning. The [$section_name] section is not empty."
+                retval=2
+                check_out=1
+            fi
+        fi
+    done < "$krb5_conf"
+
+    if test "$retval" = 0; then
+        echo "The [realms] and [domain_realm] sections is empty."
+    fi
+
+    return "$retval"
+}
+
 # Checking: is the search for the kerberos domain name enabled via DNS
 is_dns_lookup_kdc_enabled() {
     local retval=0
@@ -933,6 +972,7 @@ task is_resolve_local
 task is_krb5_conf_file_exists
 task is_smb_conf_file_exists
 task is_there_way_to_cache_kerberos_tickets
+task is_sections_with_domain_name_in_krb5_empty
 task is_dns_lookup_kdc_enabled
 task is_resolv_conf_file_exists
 task does_resolv_conf_and_default_realm_it_match
