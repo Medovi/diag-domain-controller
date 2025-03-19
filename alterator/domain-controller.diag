@@ -74,6 +74,12 @@ display_name.ru = "Проверка указанного метода кэшир
 comment.en = "Checking the specified method of caching Kerberos tickets"
 comment.ru = "Проверка указанного метода кэширования билетов Kerberos"
 
+[tests.is_sections_with_domain_name_in_krb5_empty]
+display_name.en = "Checking that the [realms] and [domain_realm] sections are not empty in krb5.conf"
+display_name.ru = "Проверка того, что разделы [realms] и [domain_realm] не являются пустыми в krb5.conf"
+comment.en = "Checking that the [realms] and [domain_realm] sections are not empty in krb5.conf"
+comment.ru = "Проверка того, что разделы [realms] и [domain_realm] не являются пустыми в krb5.conf"
+
 [tests.is_dns_lookup_kdc_enabled]
 display_name.en = "Checking: is the search for the kerberos domain name enabled via DNS"
 display_name.ru = "Проверка: включен ли поиск доменного имени kerberos через DNS"
