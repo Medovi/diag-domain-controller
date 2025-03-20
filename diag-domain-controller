@@ -678,7 +678,7 @@ is_sections_with_domain_name_in_krb5_empty() {
     return "$retval"
 }
 
-# Checking: is the search for the kerberos domain name enabled via DNS
+# Checking whether the search for the Kerberos settings for the domain via DNS is enabled
 is_dns_lookup_kdc_enabled() {
     local retval=0
 
@@ -692,6 +692,21 @@ is_dns_lookup_kdc_enabled() {
             echo "The dns_lookup_kdc parameter in file \"/etc/krb5.conf\" is disabled by default."
             retval=2
         fi
+    fi
+
+    return "$retval"
+}
+
+# Checking whether the search for the Kerberos domain name via DNS is disabled
+is_dns_lookup_realm_disabled() {
+    local retval=0
+
+    if grep -q "^\s*dns_lookup_realm\s*=\s*\([Ff][Aa][Ll][Ss][Ee]\|1\|[Nn][Oo]\)\s*$" /etc/krb5.conf; then
+        echo "The dns_lookup_realm parameter in file \"/etc/krb5.conf\" is disabled."
+    else
+        echo "The dns_lookup_realm parameter in file \"/etc/krb5.conf\" is enabled."
+        echo "This parameter should be disabled."
+        retval=1
     fi
 
     return "$retval"
@@ -983,6 +998,7 @@ task is_smb_conf_file_exists
 task is_there_way_to_cache_kerberos_tickets
 task is_sections_with_domain_name_in_krb5_empty
 task is_dns_lookup_kdc_enabled
+task is_dns_lookup_realm_disabled
 task is_resolv_conf_file_exists
 task does_resolv_conf_and_default_realm_it_match
 task does_smb_realm_and_krb5_default_realm_it_match

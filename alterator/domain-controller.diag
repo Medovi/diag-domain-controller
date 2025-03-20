@@ -81,10 +81,16 @@ comment.en = "Checking that the [realms] and [domain_realm] sections are not emp
 comment.ru = "Проверка того, что разделы [realms] и [domain_realm] не являются пустыми в krb5.conf"
 
 [tests.is_dns_lookup_kdc_enabled]
-display_name.en = "Checking: is the search for the kerberos domain name enabled via DNS"
-display_name.ru = "Проверка: включен ли поиск доменного имени kerberos через DNS"
-comment.en = "Checking: is the search for the kerberos domain name enabled via DNS"
-comment.ru = "Проверка: включен ли поиск доменного имени kerberos через DNS"
+display_name.en = "Checking whether the search for the Kerberos settings for the domain via DNS is enabled"
+display_name.ru = "Проверка, активен ли поиск настроек Kerberos для домена через DNS"
+comment.en = "Checking whether the search for the Kerberos settings for the domain via DNS is enabled"
+comment.ru = "Проверка, активен ли поиск настроек Kerberos для домена через DNS"
+
+[tests.is_dns_lookup_realm_disabled]
+display_name.en = "Checking whether the search for the Kerberos domain name via DNS is disabled"
+display_name.ru = "Проверка, отключён ли поиск доменного имени Kerberos через DNS"
+comment.en = "Checking whether the search for the Kerberos domain name via DNS is disabled"
+comment.ru = "Проверка, отключён ли поиск доменного имени Kerberos через DNS"
 
 [tests.is_resolv_conf_file_exists]
 display_name.en = "Checking for the presence of the resolv.conf configuration file and displaying the contents of the file"
