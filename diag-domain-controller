@@ -523,26 +523,30 @@ is_samba_service_running() {
 # Does the domain controller resolve DNS queries locally
 is_resolve_local() {
     local retval=0
-    resolv_conf="/etc/resolv.conf"
-    found_search=0
-    found_correct_nameserver=0
+    local resolve_conf=
+    local has_local=0
+    local address=
 
-    while IPS='' read -r line; do
-        if test "$found_search" = 0 && echo "$line" | grep -q "^search"; then
-            found_search=1
+    resolve_conf="/etc/resolv.conf"
+
+    while IPS= read -r line; do
+        if echo "$line" | grep -qE '^[[:space:]]*#|^$'; then
             continue
         fi
 
-        if test "$found_search" = 1 && echo "$line" | grep -q "^nameserver 127\.0\.0\.1"; then
-            found_correct_nameserver=1
-            break
-        fi
-    done <"$resolv_conf"
+        if echo "$line" | grep -qE '[[:space:]]*nameserver[[:space:]]+'; then
+            address="$(echo "$line" | awk '{print $2}')"
 
-    if test "$found_correct_nameserver" = 1; then
-        echo "In the resolv.conf file, the first line is nameserver 127.0.0.1 - everything is correct."
-    else
-        echo "In the resolv.conf file, the first line is a line other than nameserver 127.0.0.1 - is not correct"
+            if test "$address" = "127.0.0.1"; then
+                has_local=1
+            fi
+        fi
+    done < "$resolve_conf"
+
+    if test "$has_local" = 1; then
+        echo "The resolv.conf configuration file contains the string nameserver 127.0.0.1."
+    elif test "$has_local" = 0; then
+        echo "Error: the resolv.conf file does not contain the nameserver 127.0.0.1 line."
         retval=1
     fi
 
