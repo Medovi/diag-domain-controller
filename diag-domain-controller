@@ -592,20 +592,40 @@ is_smb_conf_file_exists() {
 # Checking the specified method of caching Kerberos tickets
 is_there_way_to_cache_kerberos_tickets() {
     local retval=0
+    local ccache_name=
     local ccache=
 
+    ccache_name="default_ccache_name"
     ccache="$(/usr/sbin/control krb5-conf-ccache)"
 
-    test -n "$ccache" -a "$ccache" != "unknow" || retval=1
-    test -n "$ccache" -a "$ccache" == "keyring" || retval=2
+    case "$ccache" in
+    "default")
+        echo "The Kerberos ticket caching policy is configured by default."
+        echo "The $ccache_name parameter is not set in krb5.conf"
+        ;;
+    "tmpfile")
+        echo "A temporary file is used to cache Kerberos tickets."
+        ;;
+    "keyring")
+        echo "The type of caching of Kerberos tickets is set: keyring."
+        echo "Possible problems with caching of Kerberos tickets."
+        retval=2
+        ;;
 
-    if test "$retval" = 0; then
-        echo "The following caching method is set: keyring."
-    elif test "$retval" = 2; then
-        echo "The caching method is set, it differs from the \"keyring\" method."
-    else
-        echo "The caching method is not specified."
-    fi
+    "unknown")
+        if grep -q "^[[:space:]]*default_ccache_name[[:space:]]*=" /etc/krb5.conf; then
+            echo "The method of caching Kerberos tickets is not defined."
+            echo "The default_ccache_name parameter may have been set incorrectly."
+            retval=1
+        else
+            echo "The Kerberos ticket caching policy is configured by default."
+        fi
+        ;;
+    *)
+        echo "The Kerberos ticket caching method is used, which may cause problems."
+        retval=1
+        ;;
+    esac
 
     return "$retval"
 }
