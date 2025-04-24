@@ -447,7 +447,6 @@ does_sysvol_contain_necessary_files() {
             if echo "$files_list_in_sysvol" | grep -q "^$folder$"; then
                 if test -z "$(ls -A "$path_to_sysvol/$smb_realm/$folder")"; then
                     echo -e "The \"$folder\" folder is empty."
-                    retval=2
                 else
                     echo -e "The \"$folder\" folder is not empty."
                 fi
