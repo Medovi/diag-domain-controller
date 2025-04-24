@@ -641,6 +641,11 @@ is_sections_with_domain_name_in_krb5_empty() {
 
     while IFS= read -r line; do
         if echo "$line" | grep -qE '^\[(realms|domain_realm)\]'; then
+            if test "$in_section" = 1 && test "$check_out" = 0; then
+                echo "Warning. The [$section_name] section is empty."
+                retval=2
+            fi
+
             section_name="$(echo $line | sed 's/^\[\(.*\)\]/\1/')"
             in_section=1
             check_out=0
@@ -649,20 +654,25 @@ is_sections_with_domain_name_in_krb5_empty() {
 
         if test "$in_section" = 1; then
             if echo "$line" | grep -qE '^\['; then
+                if test "$check_out" = 0; then
+                    echo "Warning. The [$section_name] section is empty."
+                    retval=2
+                fi
+
                 in_section=0
                 continue
             fi
 
             if ! echo "$line" | grep -qE '^[[:space:]]*($|#)' && test "$check_out" != 1; then
-                echo "Warning. The [$section_name] section is not empty."
-                retval=2
+                echo "The [$section_name] section is not empty."
                 check_out=1
             fi
         fi
     done < "$krb5_conf"
 
-    if test "$retval" = 0; then
-        echo "The [realms] and [domain_realm] sections is empty."
+    if test "$in_section" = 1 && test "$check_out" = 0; then
+        echo "Warning. The [$section_name] section is empty."
+        retval=2
     fi
 
     return "$retval"
