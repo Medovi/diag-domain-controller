@@ -970,6 +970,25 @@ is_ports_listening() {
     return $retval
 }
 
+# Checking whether the nscd service is disabled
+is_nscd_service_disabled() {
+    local retval=0
+    local service=
+
+    service="nscd.service"
+
+    __service_running "$service" &>/dev/null
+
+    if test "$?" == 0; then
+        echo "The \"$service\" service is not disabled."
+        retval=1
+    else
+        echo "The \"$service\" service is disabled."
+    fi
+
+    return "$retval"
+}
+
 task is_domain_info_available
 task is_hostname_correct
 task is_hostname_static_and_transient
@@ -990,6 +1009,7 @@ task are_there_errors_in_samba_databases
 task is_ntp_service_running
 task is_time_synchronization_enabled
 task is_ports_listening
+task is_nscd_service_disabled
 
 if test "$cmd" = "report"; then
     file_smb="/etc/samba/smb.conf"

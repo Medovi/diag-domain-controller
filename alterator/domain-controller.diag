@@ -127,3 +127,9 @@ display_name.en = "Checking services that listen on certain ports"
 display_name.ru = "Проверка портов, прослушиваемых необходимыми службами"
 comment.en = "Checking services that listen on certain ports"
 comment.ru = "Проверка портов, прослушиваемых необходимыми службами"
+
+[tests.is_ports_listening]
+display_name.en = "Checking whether the nscd service is disabled"
+display_name.ru = "Проверка: отключён ли сервис nscd"
+comment.en = "Checking whether the nscd service is disabled"
+comment.ru = "Проверка: отключён ли сервис nscd"
